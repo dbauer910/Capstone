@@ -2,36 +2,95 @@
 
 const Profile = require ('../Models/profile.model');
 
-//? Creat a New Profile
-const createProfile = async (req, res) => {
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const encryptPassword = (password) => {
+  const encrypt = bcrypt.hashSync(password, 10);
+  console.log('ENCRYPT:', encrypt);
+}
+router.post('/signup', async (req, res) => {
+  //? Creat a New Profile
+  
   try {
-    const { username, bio } = req.body;
+      const profile = new Profile({
+        username,
+        bio,
+        firstName,
+        lastName,
+        email,
+        password
+      });
+      //? Save profile to database
+      //await newProfile.save(); maybe need maybe nothis line
+      const newProfile = await profile.save();
+    const token = jwt.sign({ id: newProfile['_id'] }, process.env.JWT, { expiresIn: "1 day" });
 
-    //? If the username already exists 
-    const existingProfile = await
-
-    Profile.findOne({ username });
-    if (existingProfile) {
-      return res.status(400).json({ error:'Username already exists' });
-    }
-
-    //? Create a new profile
-    const newProfile = new Profile({
-      username,
-      bio
-    });
-
-    //? Save profile to database
-    await newProfile.save();
-
-    res.status(201).json(newProfile);
-  } catch (errpr) {
-    console.error(error);
-    res.status(500).json({ error:'Server error'});
+    res.status(201).json({
+    user: newUser,
+    message: 'Success! Profile Created!',
+    token
+  })
+  } catch (err) {
+   res.status(500).json({
+    ERROR: err.message
+   })
   }
-};
+})
+//End of Create Profile  code
+//? If the username already exists 
+    
 
-    //? Get all profiles 
+  //?  Profile.findOne({ username });
+  //?  if (existingProfile) {
+  //?    return res.status(400).json({ error:'Username already exists' });
+  //?  }
+
+    
+    
+   
+  //?  res.status(201).json(newProfile);
+  //?} catch (error) {
+  //?  console.error(error);
+  //?  res.status(500).json({ error:'Server error'});
+  //?}
+
+//?});
+
+
+
+//User Login
+
+router.post('/login', async function (req, res) {
+  try {
+    const { email, password } = req.body;
+    const profile = await Profile.findOne({ email: email });
+    
+    if (!profile) throw new Error('Email or Password does not match');
+
+    //? 3 - create a json web token
+    const token = jwt.sign({ id: user._id }, process.env.JWT, { expiresIn: '1 day' });
+
+    //? 4 - check if the passwords are the same
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    if (!passwordMatch) throw new Error('Email or Password does not match');
+
+    // 5 - send a response
+    res.status(200).json({
+      user,
+      message: 'Successful Login!',
+      token
+    });
+  } catch (err) {
+    res.status(500).json({
+      ERROR: err.message
+    })
+  }
+})
+
+
+//? Get all profiles 
     const getAllProfiles = async (req, res) => {
       try {
         const profiles = await Profile.find();
@@ -103,9 +162,4 @@ const createProfile = async (req, res) => {
     };
 
 
-module.exports = { 
-  createProfile, 
-  getAllProfiles, 
-  getProfileByUsername, 
-  updateProfileByUsername, 
-  deletePeofileByUsername};
+module.exports = router;
