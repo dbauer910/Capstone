@@ -9,25 +9,25 @@ const encryptPassword = (password) => {
   const encrypt = bcrypt.hashSync(password, 10);
   console.log('ENCRYPT:', encrypt);
 }
-router.post('/signup', async (req, res) => {
+router.post('/', async (req, res) => {
   //? Creat a New Profile
   
   try {
       const profile = new Profile({
-        username,
-        bio,
-        firstName,
-        lastName,
-        email,
-        password
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: bcrypt.hashSync(req.body.password, 13),
+        username: req.body.username,
+        bio: req.body.bio,
       });
       //? Save profile to database
       //await newProfile.save(); maybe need maybe nothis line
       const newProfile = await profile.save();
-    const token = jwt.sign({ id: newProfile['_id'] }, process.env.JWT, { expiresIn: "1 day" });
+    const token = jwt.sign({ id: newProfile._id }, process.env.JWT, { expiresIn: "1 day" });
 
     res.status(201).json({
-    user: newUser,
+    profile: newProfile,
     message: 'Success! Profile Created!',
     token
   })

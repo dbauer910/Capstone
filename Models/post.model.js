@@ -8,6 +8,7 @@ const PostSchema = new mongoose.Schema({
   description: {
     type: String,
     required: true,
+    max: 100,
     // Limit length / # of characters?
   },
   ingredients: {
@@ -23,12 +24,12 @@ const PostSchema = new mongoose.Schema({
     required: true,
   },
   coverPhoto: {
-    type: Image,
+    type: String,
     required: false,
   },
   username: {
     type: String,
-    required: false,
+    required: true
   },
 });
 
