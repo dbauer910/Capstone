@@ -1,4 +1,4 @@
-
+const router = require("express").Router();
 
 const Profile = require ('../Models/profile.model');
 
@@ -97,7 +97,7 @@ router.post('/login', async function (req, res) {
         res.json(profile);
       } catch (error) {
         console.error(error);
-        res,status(500).json({ error:'Server error'});
+        res.status(500).json({ error:'Server error'});
       }
     };
 
@@ -142,7 +142,7 @@ router.post('/login', async function (req, res) {
     };
 
     //? Delete a profile by username 
-    const deletePeofileByUsername = async (req, res) => {
+    const deleteProfileByUsername = async (req, res) => {
       try {
         const { username } = req.params;
 
@@ -160,6 +160,5 @@ router.post('/login', async function (req, res) {
         res.status(500).json({ error: 'Server error'});
       }
     };
-
 
 module.exports = router;

@@ -11,7 +11,7 @@ async function validateSession(req, res, next) {
 
     if (!profile) throw new Error("Profile Not Found");
 
-    req.profile = profile;
+    req.user = profile;
 
     return next();
   } catch (err) {
