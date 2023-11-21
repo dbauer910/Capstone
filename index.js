@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(require("cors")());
 //app.use("/home", homeFeed);
 app.use("/post", post);
-app.use("/signup", profile);
+app.use("/profile", profile);
 //app.use("/search", search); //? STRETCH GOAL
 
 app.listen(PORT, () => console.log(`App is listening on port ${PORT}`));
