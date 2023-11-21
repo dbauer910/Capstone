@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
-  recipeName: {
+  title: {
     type: String,
     required: true,
   },
@@ -9,7 +9,7 @@ const PostSchema = new mongoose.Schema({
     type: String,
     required: true,
     max: 100,
-    // Limit length / # of characters?
+    //? Limit the length / # of characters in description?
   },
   ingredients: {
     type: String,
