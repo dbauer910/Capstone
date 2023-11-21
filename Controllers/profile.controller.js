@@ -1,16 +1,24 @@
 const router = require("express").Router();
 const Profile = require("../Models/profile.model");
+const validateSession = require("../Middleware/validateSession");
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const encryptPassword = (password) => {
+function errorResponse(res, err) {
+  res.status(500).json({
+    ERROR: err.message,
+  });
+}
+
+//? Is encryptPassword needed or is line 27 sufficient?
+/* const encryptPassword = (password) => {
   const encrypt = bcrypt.hashSync(password, 10);
   console.log("ENCRYPT:", encrypt);
-};
+}; */
 
 //* Create a New Profile
-router.post("/", async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const profile = new Profile({
       firstName: req.body.firstName,
@@ -51,7 +59,7 @@ router.post("/", async (req, res) => {
     res.status(500).json({ error:'Server error'});
   } */
 
-//! User Login to Profile
+//* User Login to Profile
 router.post("/login", async function (req, res) {
   try {
     const { email, password } = req.body;
@@ -60,18 +68,18 @@ router.post("/login", async function (req, res) {
     if (!profile) throw new Error("Email or Password does not match");
 
     //? 3 - create a json web token
-    const token = jwt.sign({ id: user._id }, process.env.JWT, {
+    const token = jwt.sign({ id: profile._id }, process.env.JWT, {
       expiresIn: "1 day",
     });
 
     //? 4 - check if the passwords are the same
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, profile.password);
 
     if (!passwordMatch) throw new Error("Email or Password does not match");
 
     //? 5 - send a response
     res.status(200).json({
-      user,
+      profile,
       message: "Successful Login!",
       token,
     });
@@ -82,72 +90,74 @@ router.post("/login", async function (req, res) {
   }
 });
 
-//! Get All Profiles
-const getAllProfiles = async (req, res) => {
-  try {
-    const profiles = await Profile.find();
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+//* Get All Profiles
+router.get('/list', async(req, res) => {
+try {
+  const getAllProfiles = await Profile.find();
+  getAllProfiles.length > 0 ?
+  res.status(200).json({getAllProfiles})
+  :
+  res.status(404).json({message: "No Profiles Found"})
+  } catch (err) {
+    errorResponse(res, err);
+  }  
+});
 
 //! Get a Profile by Username
-const getProfileByUsername = async (req, res) => {
+router.get("/profile/:username", async (req, res) => {
+  try {
+    const getProfileByUsername = await Profile.findOne({username}) 
+    const { username } = req.params.username;
+    const profile = await Profile.findByUsername({ getProfileByUsername });
+    
+    if (!Profile) throw new Error("Profile Not Found");
+
+    res.status(200).json({found: profile, username: username});
+  } catch (err) {
+    errorResponse(res,err);
+  }
+});
+
+//! We need to get the validateSession working correctly on the update and delete a profile. That is why I was getting the jwt malformed error. So we can update or delete a profile without a token for authorization, but when we include validateSession in the router method then update or delete profile do not work. 
+
+//* Update a Profile by Username
+router.patch("/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const  updatedProfile  = req.body;
+
+    const updated = await Profile.findOneAndUpdate({ username },
+      updatedProfile, {
+        new: true,
+      });
+
+      if (!updated) throw new Error("Invalid Profile/Username");
+
+      res.status(200).json({ message: 'Profile Updated!!!', updated,
+    });
+
+  } catch (err) {
+    errorResponse(res, err);
+  }
+});
+
+//* Delete a Profile by Username
+router.delete("/:username", validateSession, async function (req, res) {
   try {
     const { username } = req.params;
 
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
+    const deletedProfile = await Profile.deleteOne({ username });
+
+    if (!deletedProfile.deletedCount) {
+      throw new Error("No Profile");
     }
 
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    res.status(200).json({ 
+      message: "Profile Deleted", 
+      deletedProfile });
+  } catch (err) {
+    errorResponse(res, err);
   }
-};
-
-//! Update a Profile by Username
-const updateProfileByUsername = async (req, res) => {
-  try {
-    const { username } = req.params;
-    const { bio } = req.body;
-
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
-    }
-
-    profile.bio = bio;
-    await profile.save();
-
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-//! Delete a Profile by Username
-const deleteProfileByUsername = async (req, res) => {
-  try {
-    const { username } = req.params;
-
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
-    }
-
-    await profile.remove();
-
-    res.json({ message: "Profile deleted" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+});
 
 module.exports = router;
