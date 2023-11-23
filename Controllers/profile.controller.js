@@ -1,13 +1,16 @@
 const router = require("express").Router();
 const Profile = require("../Models/profile.model");
-const validateSession = require('../Middleware/validateSession');
+
+const validateSession = require("../Middleware/validateSession");
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const encryptPassword = (password) => {
-  const encrypt = bcrypt.hashSync(password, 10);
-  console.log("ENCRYPT:", encrypt);
-};
+function errorResponse(res, err) {
+  res.status(500).json({
+    ERROR: err.message,
+  });
+}
 
 function errorResponse(res, err) {
   res.status(500).json({
@@ -26,10 +29,8 @@ router.post("/signup", async (req, res) => {
       username: req.body.username,
       bio: req.body.bio,
     });
-    //? Save profile to database
     const newProfile = await profile.save();
-    //await newProfile.save(); maybe need maybe not this line
-    const token = jwt.sign({ id: newProfile._id }, process.env.JWT, {
+    const token = jwt.sign({ username: newProfile.username }, process.env.JWT, {
       expiresIn: "1 day",
     });
 
@@ -57,27 +58,26 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ error:'Server error'});
   } */
 
-//! User Login to Profile
-router.post("/login", validateSession, async function (req, res) {
+
+//* User Login to Profile
+router.post("/login", async function (req, res) {
+
   try {
     const { email, password } = req.body;
     const profile = await Profile.findOne({ email: email });
 
     if (!profile) throw new Error("Email or Password does not match");
 
-    //? 3 - create a json web token
-    const token = jwt.sign({ id: user._id }, process.env.JWT, {
+    const token = jwt.sign({ username: profile.username }, process.env.JWT, {
       expiresIn: "1 day",
     });
 
-    //? 4 - check if the passwords are the same
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, profile.password);
 
     if (!passwordMatch) throw new Error("Email or Password does not match");
 
-    //? 5 - send a response
     res.status(200).json({
-      user,
+      profile,
       message: "Successful Login!",
       token,
     });
@@ -88,57 +88,60 @@ router.post("/login", validateSession, async function (req, res) {
   }
 });
 
-//! Get All Profiles
-const getAllProfiles = async (req, res) => {
+//* Get All Profiles
+router.get("/list", async (req, res) => {
   try {
-    const profiles = await Profile.find();
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    const getAllProfiles = await Profile.find();
+    getAllProfiles.length > 0
+      ? res.status(200).json({ getAllProfiles })
+      : res.status(404).json({ message: "No Profiles Found" });
+  } catch (err) {
+    errorResponse(res, err);
   }
-};
+});
 
-//! Get a Profile by Username
-const getProfileByUsername = async (req, res) => {
+//* Get a Profile by Username
+router.get("/:username", async (req, res) => {
   try {
-    const { username } = req.params;
+    const { username } = req.params.username;
+    const getProfileByUsername = await Profile.findOne({ username });
+    const profile = await Profile.findOne({ getProfileByUsername });
 
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
-    }
+    if (!Profile) throw new Error("Profile Not Found");
 
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    res.status(200).json({ found: profile, username: username });
+  } catch (err) {
+    errorResponse(res, err);
   }
-};
+});
 
 //* Update a Profile by Username
-router.patch("/:username", async (req, res) => {
+
+router.patch("/:username", validateSession, async (req, res) => {
   try {
     const { username } = req.params;
-    const  updatedProfile  = req.body;
+    const updatedProfile = req.body;
 
-    const updated = await Profile.findOneAndUpdate({ username },
-      updatedProfile, {
+    const updated = await Profile.findOneAndUpdate(
+      { username },
+      updatedProfile,
+      {
         new: true,
-      });
+      }
+    );
 
-      if (!updated) throw new Error("Invalid Room/User Combination");
+    if (!updated) throw new Error("Invalid Profile/Username");
 
-      res.status(200).json({ message: 'Profile Updated!!!', updated,
-    });
-
+    res.status(200).json({ message: "Profile Updated!!!", updated });
   } catch (err) {
     errorResponse(res, err);
   }
 });
 
 //* Delete a Profile by Username
-router.delete("/:username", async function (req, res) {
+
+router.delete("/:username", validateSession, async function (req, res) {
+  
   try {
     const { username } = req.params;
 
@@ -148,9 +151,12 @@ router.delete("/:username", async function (req, res) {
       throw new Error("No Profile");
     }
 
-    res.status(200).json({ 
-      message: "Profile Deleted", 
-      deletedProfile });
+
+    res.status(200).json({
+      message: "Profile Deleted",
+      deletedProfile,
+    });
+
   } catch (err) {
     errorResponse(res, err);
   }
