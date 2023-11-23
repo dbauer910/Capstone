@@ -1,9 +1,16 @@
 const router = require("express").Router();
 const Profile = require("../Models/profile.model");
+
 const validateSession = require("../Middleware/validateSession");
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+function errorResponse(res, err) {
+  res.status(500).json({
+    ERROR: err.message,
+  });
+}
 
 function errorResponse(res, err) {
   res.status(500).json({
@@ -51,8 +58,10 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ error:'Server error'});
   } */
 
+
 //* User Login to Profile
 router.post("/login", async function (req, res) {
+
   try {
     const { email, password } = req.body;
     const profile = await Profile.findOne({ email: email });
@@ -107,6 +116,7 @@ router.get("/:username", async (req, res) => {
 });
 
 //* Update a Profile by Username
+
 router.patch("/:username", validateSession, async (req, res) => {
   try {
     const { username } = req.params;
@@ -129,7 +139,9 @@ router.patch("/:username", validateSession, async (req, res) => {
 });
 
 //* Delete a Profile by Username
+
 router.delete("/:username", validateSession, async function (req, res) {
+  
   try {
     const { username } = req.params;
 
@@ -139,10 +151,12 @@ router.delete("/:username", validateSession, async function (req, res) {
       throw new Error("No Profile");
     }
 
+
     res.status(200).json({
       message: "Profile Deleted",
       deletedProfile,
     });
+
   } catch (err) {
     errorResponse(res, err);
   }
