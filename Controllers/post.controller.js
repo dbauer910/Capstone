@@ -1,8 +1,10 @@
 const router = require("express").Router();
 
 const Post = require("../Models/post.model");
-const User = require("../Models/profile.model");
+const Profile = require("../Models/profile.model");
 const validateSession = require("../Middleware/validateSession");
+
+const jwt = require('jsonwebtoken');
 
 function errorResponse(res, err) {
   res.status(500).json({
@@ -11,23 +13,30 @@ function errorResponse(res, err) {
 }
 
 //! Create a Post
-router.post("/post", validateSession, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const createPost = {
       title: req.body.title,
+      description: req.body.description,
       ingredients: req.body.ingredients,
       instructions: req.body.instructions,
       notes: req.body.notes,
+      coverPhoto: req.body.coverPhoto,
       username: req.body.username,
-      //? coverPhoto: req.body.coverPhoto,
     };
 
     const post = new Post(createPost);
+
     const newPost = await post.save();
+
+    const token = jwt.sign({ id: newPost._id }, process.env.JWT, {
+      expiresIn: "1 day",
+    });
 
     res.status(200).json({
       message: "New Post Created!",
-      newPost,
+    post: newPost,
+    token,
     });
   } catch (err) {
     errorResponse(res, err);
@@ -35,19 +44,20 @@ router.post("/post", validateSession, async (req, res) => {
 });
 
 //! Update a Post
-router.patch("/post/:id", validateSession, async (req, res) => {
+router.patch("/:id", validateSession, async (req, res) => {
   try {
-    let userId = req.user.id;
-    let post = req.params.id;
+    let _id = req.params;
+    let userId = req.username;
+    // let post = req.params.id;
     let updatedInfo = req.body;
 
     const updated = await Post.findOneAndUpdate(
-      { _id: post, user: userId },
-      updatedInfo,
-      { new: true }
-    );
+      { _id, userId },
+      updatedInfo, {
+        new: true, 
+      });
 
-    if (!updated) throw new Error("Invalid Post/User Combination");
+    if (!updated) throw new Error("Invalid Post/Profile Combination");
 
     res.status(200).json({
       message: "Updated Post!",
@@ -59,19 +69,19 @@ router.patch("/post/:id", validateSession, async (req, res) => {
 });
 
 //! Delete a Post
-router.delete("/post/:id", validateSession, async function (req, res) {
+router.delete("/:id", validateSession ,async function (req, res) {
   try {
     let { id } = req.params;
-    let userId = req.user.id;
+      let username = req.username;
 
-    const deletedPost = await Post.deleteOne({ _id: id, user: userId });
+    const deletedPost = await Post.deleteOne({ _id: id, username: username });
 
-    if (!deletedMessage.deletedCount) {
+    if (!deletedPost.deletedCount) {
       throw new Error("Post Not Found!");
     }
 
     res.status(200).json({
-      message: "Post Deleted!",
+      message: "Post Deleted!!!",
       deletedPost,
     });
   } catch (err) {

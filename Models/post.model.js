@@ -25,12 +25,14 @@ const PostSchema = new mongoose.Schema({
   },
   coverPhoto: {
     type: String,
-    required: false,
+    required: true,
   },
   username: {
     type: String,
     required: true
   },
-});
+},
+{ timestamps: true }
+);
 
 module.exports = mongoose.model("Post", PostSchema);

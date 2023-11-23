@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const Profile = require("../Models/profile.model");
-
+const validateSession = require('../Middleware/validateSession');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -9,8 +9,14 @@ const encryptPassword = (password) => {
   console.log("ENCRYPT:", encrypt);
 };
 
+function errorResponse(res, err) {
+  res.status(500).json({
+    ERROR: err.message,
+  });
+}
+
 //* Create a New Profile
-router.post("/", async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const profile = new Profile({
       firstName: req.body.firstName,
@@ -52,7 +58,7 @@ router.post("/", async (req, res) => {
   } */
 
 //! User Login to Profile
-router.post("/login", async function (req, res) {
+router.post("/login", validateSession, async function (req, res) {
   try {
     const { email, password } = req.body;
     const profile = await Profile.findOne({ email: email });
@@ -110,44 +116,44 @@ const getProfileByUsername = async (req, res) => {
   }
 };
 
-//! Update a Profile by Username
-const updateProfileByUsername = async (req, res) => {
+//* Update a Profile by Username
+router.patch("/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    const { bio } = req.body;
+    const  updatedProfile  = req.body;
 
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
-    }
+    const updated = await Profile.findOneAndUpdate({ username },
+      updatedProfile, {
+        new: true,
+      });
 
-    profile.bio = bio;
-    await profile.save();
+      if (!updated) throw new Error("Invalid Room/User Combination");
 
-    res.json(profile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+      res.status(200).json({ message: 'Profile Updated!!!', updated,
+    });
+
+  } catch (err) {
+    errorResponse(res, err);
   }
-};
+});
 
-//! Delete a Profile by Username
-const deleteProfileByUsername = async (req, res) => {
+//* Delete a Profile by Username
+router.delete("/:username", async function (req, res) {
   try {
     const { username } = req.params;
 
-    const profile = await Profile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
+    const deletedProfile = await Profile.deleteOne({ username });
+
+    if (!deletedProfile.deletedCount) {
+      throw new Error("No Profile");
     }
 
-    await profile.remove();
-
-    res.json({ message: "Profile deleted" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    res.status(200).json({ 
+      message: "Profile Deleted", 
+      deletedProfile });
+  } catch (err) {
+    errorResponse(res, err);
   }
-};
+});
 
 module.exports = router;
