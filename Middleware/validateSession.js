@@ -7,11 +7,11 @@ async function validateSession(req, res, next) {
 
     const decoded = jwt.verify(token, process.env.JWT);
 
-    const profile = await Profile.findById(decoded.id);
-
+    const profile = await Profile.findOne({username: decoded.username});
+    
     if (!profile) throw new Error("Profile Not Found");
-
-    req.user = profile;
+    
+    req.username = profile;
 
     return next();
   } catch (err) {
