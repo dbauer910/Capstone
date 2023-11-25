@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const HomeFeed = require("../models/home-feed");
 
-const validateSession = require('../middleware/validateSession');
+const validateSession = require('../Middleware/validateSession');
 
 function errorResponse(res, err){
     res.status(500).json({
