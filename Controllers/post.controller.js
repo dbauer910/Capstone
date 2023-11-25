@@ -4,7 +4,7 @@ const Post = require("../Models/post.model");
 const Profile = require("../Models/profile.model");
 const validateSession = require("../Middleware/validateSession");
 
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 function errorResponse(res, err) {
   res.status(500).json({
@@ -12,8 +12,8 @@ function errorResponse(res, err) {
   });
 }
 
-//! Create a Post
-router.post("/", async (req, res) => {
+//* Create a Post
+router.post("/", validateSession, async (req, res) => {
   try {
     const createPost = {
       title: req.body.title,
@@ -29,33 +29,24 @@ router.post("/", async (req, res) => {
 
     const newPost = await post.save();
 
-    const token = jwt.sign({ id: newPost._id }, process.env.JWT, {
-      expiresIn: "1 day",
-    });
-
     res.status(200).json({
       message: "New Post Created!",
-    post: newPost,
-    token,
+      post: newPost,
     });
   } catch (err) {
     errorResponse(res, err);
   }
 });
 
-//! Update a Post
+//* Update a Post
 router.patch("/:id", validateSession, async (req, res) => {
   try {
-    let _id = req.params;
-    let userId = req.username;
-    // let post = req.params.id;
+    let { id } = req.params;
     let updatedInfo = req.body;
 
-    const updated = await Post.findOneAndUpdate(
-      { _id, userId },
-      updatedInfo, {
-        new: true, 
-      });
+    const updated = await Post.findOneAndUpdate({ _id: id }, updatedInfo, {
+      new: true,
+    });
 
     if (!updated) throw new Error("Invalid Post/Profile Combination");
 
@@ -68,13 +59,12 @@ router.patch("/:id", validateSession, async (req, res) => {
   }
 });
 
-//! Delete a Post
-router.delete("/:id", validateSession ,async function (req, res) {
+//* Delete a Post
+router.delete("/:id", validateSession, async function (req, res) {
   try {
     let { id } = req.params;
-      let username = req.username;
 
-    const deletedPost = await Post.deleteOne({ _id: id, username: username });
+    const deletedPost = await Post.deleteOne({ _id: id });
 
     if (!deletedPost.deletedCount) {
       throw new Error("Post Not Found!");
@@ -89,8 +79,8 @@ router.delete("/:id", validateSession ,async function (req, res) {
   }
 });
 
-//! Get All Posts
-router.get("/post/list", async (req, res) => {
+//* Get All Posts
+router.get("/list", async (req, res) => {
   try {
     const getAllPosts = await Post.find();
     getAllPosts.length > 0
@@ -101,10 +91,13 @@ router.get("/post/list", async (req, res) => {
   }
 });
 
-//! Get All Posts by Username
-router.get("/post/list/:username", async (req, res) => {
+//* Get All Posts by Username
+router.get("/list/:username", validateSession, async (req, res) => {
   try {
-    const getAllPostsUsername = await Post.find();
+    const username = req.params.username;
+
+    const getAllPostsUsername = await Post.find({ username: username });
+
     getAllPostsUsername.length > 0
       ? res.status(200).json({ getAllPostsUsername })
       : res.status(404).json({ message: "No Posts Found" });
