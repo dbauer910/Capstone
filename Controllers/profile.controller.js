@@ -116,11 +116,15 @@ router.get("/:username", async (req, res) => {
 });
 
 //* Update a Profile by Username
-
 router.patch("/:username", validateSession, async (req, res) => {
   try {
     const { username } = req.params;
     const updatedProfile = req.body;
+
+    // Check if the user is updating their own profile
+    if (username !== req.profile.username) {
+      throw new Error("You can only update your own profile!");
+    }
 
     const updated = await Profile.findOneAndUpdate(
       { username },
@@ -139,11 +143,15 @@ router.patch("/:username", validateSession, async (req, res) => {
 });
 
 //* Delete a Profile by Username
-
 router.delete("/:username", validateSession, async function (req, res) {
   
   try {
     const { username } = req.params;
+
+    // Check if the user is deleting their own profile
+    if (username !== req.profile.username) {
+      throw new Error("You can only delete your own profile!");
+    }
 
     const deletedProfile = await Profile.deleteOne({ username });
 
