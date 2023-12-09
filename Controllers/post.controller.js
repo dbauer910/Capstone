@@ -22,7 +22,8 @@ router.post("/", validateSession, async (req, res) => {
       instructions: req.body.instructions,
       notes: req.body.notes,
       coverPhoto: req.body.coverPhoto,
-      username: req.body.username,
+      //username: req.body.username,
+      userId: req.profile._id 
     };
 
     const post = new Post(createPost);
@@ -91,15 +92,18 @@ router.get("/list", async (req, res) => {
   }
 });
 
-//* Get All Posts by Username
-router.get("/list/:username", validateSession, async (req, res) => {
+//* Get All Posts by User Id
+router.get("/list/:userId", validateSession, async (req, res) => {
   try {
-    const username = req.params.username;
+    const userId = req.params.userId;
+    console.log("Received userId:", userId);
+    console.log("Profile:", req.profile);
 
-    const getAllPostsUsername = await Post.find({ username: username });
+    const getAllPostsUserId = await Post.find({ userId: userId });
+    console.log('getAllPostsUserId:', getAllPostsUserId);
 
-    getAllPostsUsername.length > 0
-      ? res.status(200).json({ getAllPostsUsername })
+    getAllPostsUserId.length > 0
+      ? res.status(200).json({ getAllPostsUserId })
       : res.status(404).json({ message: "No Posts Found" });
   } catch (err) {
     errorResponse(res, err);
