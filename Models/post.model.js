@@ -27,10 +27,15 @@ const PostSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  username: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "profile.model", // Reference the Profile model
+    required: true,
+  },
+  /* username: {
     type: String,
     required: true
-  },
+  }, */
 },
 
   { timestamps: true }
