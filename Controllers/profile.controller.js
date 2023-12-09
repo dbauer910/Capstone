@@ -12,12 +12,6 @@ function errorResponse(res, err) {
   });
 }
 
-function errorResponse(res, err) {
-  res.status(500).json({
-    ERROR: err.message,
-  });
-}
-
 //* Create a New Profile
 router.post("/signup", async (req, res) => {
   try {
@@ -46,22 +40,8 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-//? Check If the username already exists - we may need this
-/* Profile.findOne({ username });
-    if (existingProfile) {
-      return res.status(400).json({ error:'Username already exists' });
-    }
-   
-    res.status(201).json(newProfile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error:'Server error'});
-  } */
-
-
 //* User Login to Profile
 router.post("/login", async function (req, res) {
-
   try {
     const { email, password } = req.body;
     const profile = await Profile.findOne({ email: email });
@@ -100,71 +80,71 @@ router.get("/list", async (req, res) => {
   }
 });
 
-//* Get a Profile by Username
-router.get("/:username", async (req, res) => {
+//* Get a Profile by User Id
+router.get("/:userId", validateSession, async (req, res) => {
   try {
-    const { username } = req.params.username;
-    const getProfileByUsername = await Profile.findOne({ username });
-    const profile = await Profile.findOne({ getProfileByUsername });
+    const userId = req.params.userId;
 
-    if (!Profile) throw new Error("Profile Not Found");
+    const profile = await Profile.findOne({ _id: userId });
 
-    res.status(200).json({ found: profile, username: username });
+    if (!profile) throw new Error("Profile Not Found");
+
+    res.status(200).json({ found: profile, userId: userId });
   } catch (err) {
     errorResponse(res, err);
+    console.error(err); // Log the error for debugging
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-//* Update a Profile by Username
-router.patch("/:username", validateSession, async (req, res) => {
+//* Update a Profile by UserId
+router.patch("/:userId", validateSession, async (req, res) => {
   try {
-    const { username } = req.params;
+    const { userId } = req.params;
     const updatedProfile = req.body;
 
     // Check if the user is updating their own profile
-    if (username !== req.profile.username) {
+    if (userId !== req.profile._id.toString()) {
       throw new Error("You can only update your own profile!");
     }
 
     const updated = await Profile.findOneAndUpdate(
-      { username },
+      { _id: userId },
       updatedProfile,
       {
         new: true,
       }
     );
 
-    if (!updated) throw new Error("Invalid Profile/Username");
+    if (!updated) throw new Error("Invalid Profile/UserId");
 
     res.status(200).json({ message: "Profile Updated!!!", updated });
   } catch (err) {
+    console.error(err);
     errorResponse(res, err);
   }
 });
 
-//* Delete a Profile by Username
-router.delete("/:username", validateSession, async function (req, res) {
-  
+//* Delete a Profile by UserId
+router.delete("/:userId", validateSession, async function (req, res) {
   try {
-    const { username } = req.params;
+    const { userId } = req.params;
 
     // Check if the user is deleting their own profile
-    if (username !== req.profile.username) {
+    if (userId !== req.profile._id.toString()) {
       throw new Error("You can only delete your own profile!");
     }
 
-    const deletedProfile = await Profile.deleteOne({ username });
+    const deletedProfile = await Profile.deleteOne({ _id: userId });
 
     if (!deletedProfile.deletedCount) {
       throw new Error("No Profile");
     }
 
-
     res.status(200).json({
       message: "Profile Deleted",
       deletedProfile,
     });
-
   } catch (err) {
     errorResponse(res, err);
   }

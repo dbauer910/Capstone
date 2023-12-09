@@ -1,47 +1,45 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const ProfileSchema = new mongoose.Schema ({
-
-  // user: { 
-    // type: mongoose.Schema.Types.ObjectId, 
-    // ref: 'user'
+const ProfileSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: true
+    required: true,
   },
 
-  lastName:{
+  lastName: {
     type: String,
-    required: true
+    required: true,
   },
 
-  email:{
+  email: {
     required: true,
     type: String,
-    unique: true
+    unique: true,
   },
 
-  password:{
+  password: {
     type: String,
-    required: true
+    required: true,
   },
 
-    username: {
-      type: String,
-      required: true,
-      unique: true
-    },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 
   bio: {
     type: String,
     required: false,
-    max: 50
+    max: 50,
   },
 
   image: {
-    type: String, 
-    required: false
-  }
+    type: String,
+    required: false,
+  },
 });
 
-module.exports = mongoose.model('Profile', ProfileSchema);
+const Profile = mongoose.model("Profile", ProfileSchema);
+
+module.exports = Profile;
