@@ -34,6 +34,7 @@ router.post("/signup", async (req, res) => {
       token,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       ERROR: err.message,
     });
@@ -92,7 +93,7 @@ router.get("/:userId", validateSession, async (req, res) => {
     res.status(200).json({ found: profile, userId: userId });
   } catch (err) {
     errorResponse(res, err);
-    console.error(err); // Log the error for debugging
+    console.error(err); 
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -108,15 +109,15 @@ router.patch("/:userId", validateSession, async (req, res) => {
       throw new Error("You can only update your own profile!");
     }
 
-    const updated = await Profile.findOneAndUpdate(
-      { _id: userId },
-      updatedProfile,
-      {
-        new: true,
+    // Update only the fields that are provided with new values
+    const allowedFields = ["firstName", "lastName", "email", "password", "username", "bio", "image"];
+    allowedFields.forEach((field) => {
+      if (updatedProfile[field] !== undefined) {
+        req.profile[field] = updatedProfile[field];
       }
-    );
+    });
 
-    if (!updated) throw new Error("Invalid Profile/UserId");
+    const updated = await req.profile.save();
 
     res.status(200).json({ message: "Profile Updated!!!", updated });
   } catch (err) {
