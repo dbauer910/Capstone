@@ -15,6 +15,9 @@ function errorResponse(res, err) {
 //* Create a Post
 router.post("/", validateSession, async (req, res) => {
   try {
+
+    const userId = req.profile._id;
+
     const createPost = {
       title: req.body.title,
       description: req.body.description,
@@ -23,7 +26,7 @@ router.post("/", validateSession, async (req, res) => {
       notes: req.body.notes,
       coverPhoto: req.body.coverPhoto,
       //username: req.body.username,
-      userId: req.profile._id 
+      userId: userId 
     };
 
     const post = new Post(createPost);
