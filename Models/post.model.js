@@ -25,17 +25,17 @@ const PostSchema = new mongoose.Schema({
   },
   coverPhoto: {
     type: String,
-    required: true,
+    required: false,
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "profile.model", // Reference the Profile model
     required: true,
   },
-  /* username: {
+  username: {
     type: String,
     required: true
-  }, */
+  },
 },
 
   { timestamps: true }

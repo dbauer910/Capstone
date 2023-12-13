@@ -17,7 +17,7 @@ router.post("/", validateSession, async (req, res) => {
   try {
 
     const userId = req.profile._id;
-
+    console.log("PROFILE FROM ADD POST:", req.profile);
     const createPost = {
       title: req.body.title,
       description: req.body.description,
@@ -25,7 +25,7 @@ router.post("/", validateSession, async (req, res) => {
       instructions: req.body.instructions,
       notes: req.body.notes,
       coverPhoto: req.body.coverPhoto,
-      //username: req.body.username,
+      username: req.profile.username,
       userId: userId 
     };
 
